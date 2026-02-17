@@ -1,11 +1,17 @@
-# Welcome to your Jupyter Book
+# 240411100001_Rafli Khiyanuran Bazhari
 
-This is a small sample book to give you a feel for how book content is
-structured.
-It shows off a few of the major file types, as well as some sample content.
-It does not go in-depth into any particular topic - check out [the Jupyter Book documentation](https://jupyterbook.org) for more information.
+## Profil Singkat
 
-Check out the content pages bundled with this sample book to see more.
+Saya **Rafli Khiyanuran Bazhari**, berusia **20 tahun**, saat ini berkuliah di  
+**Universitas Trunojoyo Madura**, Program Studi **Teknik Informatika**, dan sedang
+menempuh **semester 4**. Di luar perkuliahan, saya hobi **bermain game**, yang
+sering saya jadikan sarana refreshing sekaligus belajar mengenai dunia teknologi
+dan interaksi pengguna.
 
-```{tableofcontents}
-```
+## Struktur Materi
+
+- [Business Understanding](business-understanding)
+- [Data Understanding](data-understanding)
+- [Data Preparation](data-preparation)
+- [Modelling](modelling)
+- [Deployment](deployment)
