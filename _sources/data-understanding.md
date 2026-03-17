@@ -407,3 +407,411 @@ Contoh output 5x5:
 | 3 | 0.561224 | 0.469388 | 0.571429 | 0.000000 | 0.377551 |
 | 4 | 0.397959 | 0.163265 | 0.306122 | 0.377551 | 0.000000 |
 
+
+
+
+# 1. Dataset yang Digunakan
+
+Pada analisis ini digunakan **Boston Housing Dataset** yang diperoleh dari Kaggle. Dataset ini memuat berbagai variabel yang mencerminkan kondisi lingkungan, faktor sosial ekonomi, serta karakteristik rumah di wilayah Boston.
+
+Dataset ini sering digunakan dalam machine learning, khususnya untuk kasus prediksi harga rumah berdasarkan beberapa atribut seperti tingkat kriminalitas (*CRIM*), jumlah kamar (*RM*), dan persentase status sosial rendah (*LSTAT*).
+
+---
+
+# 2. Perhitungan WKNN Secara Manual
+
+## 2.1 Identifikasi Missing Value
+Ditemukan nilai kosong (*missing value*) pada atribut **LSTAT**. Nilai tersebut akan diestimasi menggunakan metode **Weighted K-Nearest Neighbor (WKNN)**.
+
+---
+
+## 2.2 Normalisasi Data
+Data dinormalisasi menggunakan metode **Min-Max Scaling** agar semua variabel berada pada skala yang sama.
+
+Rumus:
+
+$$
+x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}
+$$
+
+---
+
+## 2.3 Perhitungan Similarity
+
+Nilai kemiripan antar data dihitung dengan rumus:
+
+$$
+S_i = \frac{1}{\sum (Y_{ih} - Y_{jh})^2}
+$$
+
+Hasil perhitungan:
+
+| No | Si |
+|----|----|
+| 1 | 0.096432567 |
+| 2 | 0.186117946 |
+| 3 | 0.251889237 |
+| 4 | 1.262310597 |
+
+---
+
+## 2.4 Menghitung Total Similarity
+
+$$
+\sum S_i = 1.796750348
+$$
+
+---
+
+## 2.5 Menghitung Nilai Tertimbang
+
+| Si | LSTAT (Yjh) | Si × Yjh |
+|----|------------|----------|
+| 0.096432567 | 0.329032258 | 0.031730 |
+| 0.186117946 | 1 | 0.186118 |
+| 0.251889237 | 0.175806452 | 0.044277 |
+| 1.262310597 | 0 | 0 |
+
+$$
+\sum (S_i \times Y_{jh}) = 0.262125
+$$
+
+---
+
+## 2.6 Hasil Imputasi
+
+Nilai imputasi dihitung dengan:
+
+$$
+\hat{y}_{ih} =
+\frac{\sum (S_i \times Y_{jh})}{\sum S_i}
+$$
+
+Hasil:
+
+$$
+\hat{y}_{ih} = 0.14589179
+$$
+
+Nilai ini digunakan untuk menggantikan missing value pada atribut **LSTAT**.
+
+---
+
+# 3. Implementasi Menggunakan Python
+
+## 3.1 Import Library
+```python
+import pandas as pd
+import numpy as np
+from sklearn.preprocessing import MinMaxScaler
+
+3.2 Membaca Dataset
+df = pd.read_excel("data.xlsx")
+df = df.replace("?", np.nan)
+df = df.apply(pd.to_numeric)
+
+print(df)
+
+3.3 Menentukan Kolom Normalisasi
+cols_norm = [
+'CRIM','INDUS','NOX','RM','AGE',
+'DIS','TAX','PTRATIO','B','LSTAT','MEDV'
+]
+
+3.4 Menghitung Nilai Minimum dan Maksimum
+min_val = df[cols_norm].min()
+max_val = df[cols_norm].max()
+
+print(min_val)
+print(max_val)
+3.5 Normalisasi Data
+df_norm = df.copy()
+
+for col in cols_norm:
+    df_norm[col] = (df[col] - min_val[col]) / (max_val[col] - min_val[col])
+
+print(df_norm)
+3.6 Menentukan Data Missing
+missing_index = df_norm[df_norm['LSTAT'].isna()].index
+row_missing = df_norm.loc[missing_index].drop(columns=['LSTAT']).iloc[0]
+
+complete_data = df_norm.dropna()
+3.7 Menghitung Similarity
+Si = []
+Yjh = []
+
+for i in range(len(complete_data)):
+    row = complete_data.iloc[i].drop('LSTAT')
+    diff = (row_missing - row) ** 2
+    similarity = 1 / diff.sum()
+    
+    Si.append(similarity)
+    Yjh.append(complete_data.iloc[i]['LSTAT'])
+
+Si = np.array(Si)
+Yjh = np.array(Yjh)
+
+print(Si)
+
+Output:
+
+[0.09643257 0.18611795 0.25188924 1.2623106]
+3.8 Menghitung Penyebut
+penyebut = np.sum(Si)
+print(penyebut)
+
+Output:
+
+1.796750347642724
+3.9 Menghitung Pembilang
+pembilang = np.sum(Si * Yjh)
+print(pembilang)
+
+Output:
+
+0.262125
+3.10 Hasil Imputasi
+hasil = pembilang / penyebut
+print(hasil)
+
+Output:
+
+0.14589179
+3.11 Kesimpulan
+
+Hasil perhitungan menggunakan Python menghasilkan nilai yang sama dengan perhitungan manual, yaitu 0.14589179. Hal ini menunjukkan bahwa proses imputasi menggunakan metode WKNN telah dilakukan dengan benar dan konsisten.
+
+
+## 2. Normalisasi Data
+
+Normalisasi merupakan tahap preprocessing yang bertujuan untuk mengubah skala data ke dalam rentang tertentu sehingga setiap fitur memiliki kontribusi yang seimbang dalam proses analisis.
+
+Langkah ini penting terutama pada algoritma berbasis jarak, karena perbedaan skala dapat menyebabkan fitur dengan nilai besar menjadi lebih dominan dibandingkan fitur lainnya.
+
+---
+
+### 2.1 Jenis-Jenis Normalisasi
+
+#### 1. Min-Max Scaling
+
+Metode ini mentransformasikan nilai data ke dalam rentang tertentu, biasanya antara 0 hingga 1.
+
+Rumus:
+
+$$
+x' = \frac{x - x_{\min}}{x_{\max} - x_{\min}}
+$$
+
+**Contoh Perhitungan:**
+
+Data pada atribut **AGE**:
+
+| AGE |
+|-----|
+| 65.2 |
+| 78.9 |
+| 45.8 |
+
+Nilai minimum dan maksimum:
+
+- \(x_{\min} = 45.8\)  
+- \(x_{\max} = 78.9\)
+
+Perhitungan:
+
+$$
+x' = \frac{65.2 - 45.8}{78.9 - 45.8}
+$$
+
+$$
+x' = \frac{19.4}{33.1} = 0.586
+$$
+
+Hasil normalisasi:
+
+| AGE Awal | AGE Normalisasi |
+|----------|----------------|
+| 65.2 | 0.586 |
+| 78.9 | 1 |
+| 45.8 | 0 |
+
+---
+
+#### 2. Z-Score Standardization
+
+Metode ini menggunakan nilai rata-rata (*mean*) dan standar deviasi untuk melakukan normalisasi.
+
+Rumus:
+
+$$
+x' = \frac{x - \mu}{\sigma}
+$$
+
+**Contoh Perhitungan:**
+
+Data **AGE**:
+
+| AGE |
+|-----|
+| 65.2 |
+| 78.9 |
+| 45.8 |
+
+**Menghitung Mean:**
+
+$$
+\mu = \frac{65.2 + 78.9 + 45.8}{3} = 63.3
+$$
+
+**Menghitung Varians:**
+
+$$
+(65.2 - 63.3)^2 = 3.61
+$$
+
+$$
+(78.9 - 63.3)^2 = 243.36
+$$
+
+$$
+(45.8 - 63.3)^2 = 306.25
+$$
+
+$$
+\text{Total} = 553.22
+$$
+
+$$
+\frac{553.22}{3} = 184.41
+$$
+
+**Standar Deviasi:**
+
+$$
+\sigma = \sqrt{184.41} = 13.58
+$$
+
+**Perhitungan Z-Score:**
+
+$$
+x' = \frac{65.2 - 63.3}{13.58} = 0.14
+$$
+
+Hasil:
+
+| AGE Awal | Z-Score |
+|----------|--------|
+| 65.2 | 0.14 |
+| 78.9 | 1.15 |
+| 45.8 | -1.29 |
+
+---
+
+#### 3. Decimal Scaling
+
+Metode ini dilakukan dengan membagi data menggunakan pangkat 10 berdasarkan jumlah digit terbesar.
+
+Rumus:
+
+$$
+x' = \frac{x}{10^j}
+$$
+
+**Contoh:**
+
+Data **AGE**:
+
+| AGE |
+|-----|
+| 65.2 |
+| 78.9 |
+| 45.8 |
+
+Nilai terbesar adalah **78.9**, sehingga jumlah digit sebelum desimal adalah 2 → \(j = 2\)
+
+Perhitungan:
+
+$$
+x' = \frac{65.2}{10^2} = 0.652
+$$
+
+Hasil:
+
+| AGE Awal | Decimal Scaling |
+|----------|----------------|
+| 65.2 | 0.652 |
+| 78.9 | 0.789 |
+| 45.8 | 0.458 |
+
+---
+
+### 2.2 Implementasi Normalisasi dengan Python (Scikit-Learn)
+
+Selain dilakukan secara manual, normalisasi juga dapat diimplementasikan menggunakan library **scikit-learn** untuk meningkatkan efisiensi.
+
+Data yang digunakan:
+
+| AGE |
+|-----|
+| 65.2 |
+| 78.9 |
+| 45.8 |
+
+---
+
+#### 1. Min-Max Scaling
+
+```python
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+
+data = {'AGE':[65.2,78.9,45.8]}
+df = pd.DataFrame(data)
+
+scaler = MinMaxScaler()
+df['AGE_MinMax'] = scaler.fit_transform(df[['AGE']])
+
+print(df)
+
+Output:
+
+AGE	AGE_MinMax
+65.2	0.586
+78.9	1
+45.8	0
+2. Z-Score Standardization
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+df['AGE_ZScore'] = scaler.fit_transform(df[['AGE']])
+
+print(df)
+
+Output:
+
+AGE	AGE_ZScore
+65.2	0.14
+78.9	1.15
+45.8	-1.29
+3. Decimal Scaling (Manual dengan Python)
+import numpy as np
+
+data = {'AGE':[65.2,78.9,45.8]}
+df = pd.DataFrame(data)
+
+max_value = df['AGE'].max()
+j = len(str(int(max_value)))
+
+df['AGE_Decimal'] = df['AGE'] / (10**j)
+
+print(df)
+
+Output:
+
+AGE	AGE_Decimal
+65.2	0.652
+78.9	0.789
+45.8	0.458
+Kesimpulan
+
+Berdasarkan hasil perhitungan, nilai normalisasi yang diperoleh melalui Python sesuai dengan hasil perhitungan manual. Hal ini menunjukkan bahwa metode normalisasi telah diterapkan dengan benar, serta penggunaan library seperti scikit-learn dapat membantu mempercepat proses preprocessing data.
